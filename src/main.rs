@@ -100,8 +100,7 @@ impl<'a> Application<'a> {
 	}
 
 	fn draw_frame(&mut self) -> Result<(), String> {
-		let surface = self.canvas.window().surface(&self.events)
-			.map_err(|e| format!("Failed to get window surface: {}", e))?;
+		let viewport = self.canvas.viewport();
 		let buf_width = self.width as usize;
 		let buf_height = self.height as usize;
 
@@ -120,8 +119,8 @@ impl<'a> Application<'a> {
 
 		let buf_width  = f64::from(self.width);
 		let buf_height = f64::from(self.height);
-		let win_width  = f64::from(surface.width());
-		let win_height = f64::from(surface.height());
+		let win_width  = f64::from(viewport.width());
+		let win_height = f64::from(viewport.height());
 
 		let ratio_w = win_width  / buf_width;
 		let ratio_h = win_height / buf_height;
