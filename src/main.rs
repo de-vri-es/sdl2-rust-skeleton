@@ -10,17 +10,17 @@ use std::time::Instant;
 use std::time::Duration;
 
 fn main() -> Result<(), String> {
-	let context = sdl2::init()?;
-	let video = context.video()?;
+	let context = sdl2::init().map_err(|e| format!("Failed to initialize SDL2: {}", e))?;
+	let video = context.video().map_err(|e| format!("Failed to get video subsystem: {}", e))?;
 
 	let window = video.window("SDL2 test", 800, 600)
 		.borderless()
 		.resizable()
 		.opengl()
 		.build()
-		.map_err(|e| e.to_string())?;
-	let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
-	let mut events = context.event_pump()?;
+		.map_err(|e| format!("Failed to create window: {}", e))?; //.to_string())?;
+	let mut canvas = window.into_canvas().build().map_err(|e| format!("Failed to acquire window canvas: {}", e.to_string()))?;
+	let mut events = context.event_pump().map_err(|e| format!("Failed to acquire event pump: {}", e))?;
 
 	let mut texture_creator = canvas.texture_creator();
 
@@ -51,7 +51,7 @@ impl<'a> Application<'a> {
 			TextureAccess::Streaming,
 			width,
 			height,
-		).map_err(|e| e.to_string())?;
+		).map_err(|e| format!("Failed to create texture: {}", e.to_string()))?;
 
 		Ok(Self {
 			events,
@@ -100,7 +100,8 @@ impl<'a> Application<'a> {
 	}
 
 	fn draw_frame(&mut self) -> Result<(), String> {
-		let mut surface = self.canvas.window().surface(&self.events)?;
+		let surface = self.canvas.window().surface(&self.events)
+			.map_err(|e| format!("Failed to get window surface: {}", e))?;
 		let buf_width = self.width as usize;
 		let buf_height = self.height as usize;
 
@@ -113,7 +114,7 @@ impl<'a> Application<'a> {
 					pixel[2] = 0;
 				}
 			}
-		});
+		}).map_err(|e| format!("Failed to lock pixel buffer: {}", e))?;
 
 		let buf_rect = Rect::new(0, 0, buf_width as u32, buf_height as u32);
 
@@ -131,7 +132,8 @@ impl<'a> Application<'a> {
 		let win_rect = Rect::new(x, y, (buf_width * ratio) as u32, (buf_height * ratio) as u32);
 
 		self.canvas.clear();
-		self.canvas.copy(&self.texture, Some(buf_rect), Some(win_rect));
+		self.canvas.copy(&self.texture, Some(buf_rect), Some(win_rect))
+			.map_err(|e| format!("Failed to copy pixel buffer to window: {}", e))?;
 
 		Ok(())
 	}
